@@ -1,9 +1,38 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Button, TouchableOpacity } from "react-native";
+import { useState } from "react";
+import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 
 const CreateBill = () => {
+    const [facing, setFacing] = useState<CameraType>("back");
+    const [permission, requestPermission] = useCameraPermissions();
+
+    if (!permission) {
+        // Add the screen when the persmission is not granted
+        return <View />;
+    }
+
+    if (!permission.granted) { 
+        return (
+            <View style={styles.container}>
+                <Text style={styles.message}>Permission to access camera is required!</Text>
+                <Button onPress={requestPermission} title="grant permission"/>
+            </View>
+        )
+    }
+
+    function toggleCameraType() {
+        setFacing(current => (current === "back" ? "front" : "back"));
+    }
+
   return (
     <View style={styles.container}>
         <Text style={styles.title}>createBill</Text>
+        <CameraView facing={facing}></CameraView>
+        <View>
+            <TouchableOpacity onPress={toggleCameraType}>
+                <Text>Flip Camera</Text>
+            </TouchableOpacity>
+        </View>
     </View>
   )
 }
@@ -22,4 +51,7 @@ const styles = StyleSheet.create({
         marginBottom: 40,
         fontSize: 32, 
     },
+    message: {
+        fontSize: 18,
+    }
 });
