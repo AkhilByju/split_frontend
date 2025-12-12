@@ -1,11 +1,17 @@
 import { View, Text, StyleSheet, Button, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
+import CreatePartyForm from "../components/createPartyForm";
+// import { useNavigation } from "expo-router";
+import { api } from "../src/api";
 
 const CreateBill = () => {
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [useCamera, setUseCamera] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!permission) return <View />;
 
@@ -20,6 +26,43 @@ const CreateBill = () => {
 
   const toggleCameraType = () => {
     setFacing((current) => (current === "back" ? "front" : "back"));
+  };
+
+  const handleSubmit = async ({
+    displayName, merchant, subtotal, tax, tip
+  }: {
+    displayName: string;
+    merchant: string;
+    subtotal: number;
+    tax: number;
+    tip: number;
+  }) => {
+    try {
+        setLoading(true);
+        setError(null);
+
+        // create the session
+        const sessionResponse = await api.post('/sessions/create', {
+            merchant, subtotal, tax, tip
+        })
+
+        const session = sessionResponse.data.session;
+        console.log("Created session:", session);
+
+        // Add the host as a user to the session
+        const userResponse = await api.post(`/sessions/${session.code}/join`, {displayName, isHost: true});
+        
+        const hostUser = userResponse.data.user;
+        console.log("Created host user:", hostUser);
+
+
+        // On success, navigate to the bill screen
+    } catch (error) {
+        console.log(error);
+        setError("An error occurred while creating the bill.");
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (
@@ -42,8 +85,11 @@ const CreateBill = () => {
         <CameraView style={styles.camera} facing={facing} />
       ) : (
         <View style={styles.form}>
-          <Text style={styles.title}>Create Bill</Text>
-          {/* put your form inputs here */}
+          <CreatePartyForm 
+            onSubmit={handleSubmit}
+            loading={loading}
+            error={error}
+          />
         </View>
       )}
     </View>
