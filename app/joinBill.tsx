@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { View, Text, TextInput, Pressable, ActivityIndicator, StyleSheet } from 'react-native'
 import { joinSession } from '../src/api'
+import { router } from 'expo-router';
 
 const JoinBill = () => {
   const [code, setCode] = useState('');
@@ -18,8 +19,7 @@ const JoinBill = () => {
       console.log("Joined session:", result);
 
       // On success, navigate to the bill screen
-
-
+      router.push(`/session/${result.session.code}`);
     } catch (error) {
       console.log(error);
       setError("An error occurred while joining the bill.");

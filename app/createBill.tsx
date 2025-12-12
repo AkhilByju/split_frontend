@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Button, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import CreatePartyForm from "../components/createPartyForm";
-// import { useNavigation } from "expo-router";
+import { router } from "expo-router";
 import { api } from "../src/api";
 
 const CreateBill = () => {
@@ -57,6 +57,7 @@ const CreateBill = () => {
 
 
         // On success, navigate to the bill screen
+        router.push(`/session/${session.code}`);
     } catch (error) {
         console.log(error);
         setError("An error occurred while creating the bill.");
