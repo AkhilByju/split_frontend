@@ -12,7 +12,7 @@ type SubmitPayload = {
 type Props = {
   onSubmit: (data: SubmitPayload) => void;
   loading?: boolean;
-  error?: string | null;          // <-- THIS fixes it
+  error?: string | null;
   initialMerchant?: string;
   initialSubtotal?: string;
   initialTax?: string;
