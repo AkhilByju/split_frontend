@@ -1,10 +1,5 @@
 import { View, Text, StyleSheet } from "react-native";
 import { Link } from "expo-router";
-// import { useState } from "react";
-// import axios from "axios";
-// import Constants from 'expo-constants';
-
-// const apiURL = Constants.expoConfig?.extra?.apiURL || "";
 
 export default function Index() {
   return (
