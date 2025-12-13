@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, Button, TouchableOpacity } from "react-native";
-import { useState } from "react";
+import { View, Text, StyleSheet, Button, TouchableOpacity, Image } from "react-native";
+import { useRef, useState } from "react";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import CreatePartyForm from "../components/createPartyForm";
 import { router } from "expo-router";
@@ -9,6 +9,10 @@ const CreateBill = () => {
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [useCamera, setUseCamera] = useState(false);
+
+  const cameraRef = useRef<CameraView | null>(null);
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [capturing, setCapturing] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +70,26 @@ const CreateBill = () => {
     }
   };
 
+  const takePhoto = async () => {
+    if (!cameraRef.current || capturing) return;
+
+    try {
+        setCapturing(true);
+        const photo = await cameraRef.current.takePictureAsync({
+            quality: 0.8,
+            skipProcessing: true,   // might need to take off
+        })
+
+        if (photo.uri) {
+            setPhotoUri(photo.uri);
+        }
+    } catch (error) {
+        console.error("Error taking photo:", error);
+    } finally {
+        setCapturing(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.topBar}>
@@ -83,16 +107,34 @@ const CreateBill = () => {
       </View>
 
       {useCamera ? (
-        <CameraView style={styles.camera} facing={facing} />
-      ) : (
+        photoUri ? (
+            <View style={styles.preview}>
+            <Image source={{ uri: photoUri }} style={styles.previewImg} />
+            <View style={styles.previewActions}>
+                <Button title="Retake" onPress={() => setPhotoUri(null)} />
+                <Button title="Use Photo" onPress={() => console.log("confirm", photoUri)} />
+            </View>
+            </View>
+        ) : (
+            <View style={{ flex: 1 }}>
+            <CameraView ref={cameraRef} style={styles.camera} facing={facing} />
+            <View style={styles.captureBar}>
+                <TouchableOpacity
+                onPress={takePhoto}
+                disabled={capturing}
+                style={[styles.captureBtn, capturing && { opacity: 0.6 }]}
+                >
+                <Text style={styles.captureText}>{capturing ? "..." : "Capture"}</Text>
+                </TouchableOpacity>
+            </View>
+            </View>
+        )
+        ) : (
         <View style={styles.form}>
-          <CreatePartyForm 
-            onSubmit={handleSubmit}
-            loading={loading}
-            error={error}
-          />
+            <CreatePartyForm onSubmit={handleSubmit} loading={loading} error={error} />
         </View>
-      )}
+        )}
+
     </View>
   );
 };
@@ -136,4 +178,11 @@ const styles = StyleSheet.create({
   message: { fontSize: 18 },
   flipBtn: { padding: 10 },
   flipText: { fontSize: 16 },
+  preview: { flex: 1, justifyContent: "center" },
+  previewImg: { flex: 1, borderRadius: 12 },
+  previewActions: { padding: 12, flexDirection: "row", justifyContent: "space-between" },
+  captureBar: { position: "absolute", bottom: 20, left: 0, right: 0, alignItems: "center" },
+  captureBtn: { paddingVertical: 14, paddingHorizontal: 22, borderRadius: 999, backgroundColor: "black" },
+  captureText: { color: "white", fontWeight: "600" },
+
 });
