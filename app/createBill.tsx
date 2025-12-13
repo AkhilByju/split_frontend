@@ -8,7 +8,7 @@ import { api } from "../src/api";
 const CreateBill = () => {
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
-  const [useCamera, setUseCamera] = useState(false);
+  const [useCamera, setUseCamera] = useState(true);
 
   const cameraRef = useRef<CameraView | null>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -149,7 +149,6 @@ const styles = StyleSheet.create({
   topBar: {
     paddingTop: 50,
     paddingHorizontal: 16,
-    paddingBottom: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -179,7 +178,14 @@ const styles = StyleSheet.create({
   flipBtn: { padding: 10 },
   flipText: { fontSize: 16 },
   preview: { flex: 1, justifyContent: "center" },
-  previewImg: { flex: 1, borderRadius: 12 },
+  previewImg: {     
+    height: "75%",
+    width: "75%",
+    alignSelf: "center",
+    borderRadius: 16,
+    overflow: "hidden",
+    paddingBottom: 25
+  },
   previewActions: { padding: 12, flexDirection: "row", justifyContent: "space-between" },
   captureBar: { position: "absolute", bottom: 20, left: 0, right: 0, alignItems: "center" },
   captureBtn: { paddingVertical: 14, paddingHorizontal: 22, borderRadius: 999, backgroundColor: "black" },
