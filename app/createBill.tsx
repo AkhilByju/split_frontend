@@ -3,8 +3,7 @@ import { useRef, useState } from "react";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import CreatePartyForm from "../components/createPartyForm";
 import { router } from "expo-router";
-import { api } from "../src/api";
-import { extractTextFromImage, isSupported } from 'expo-text-extractor';
+import { api, parseReceiptImage } from "../src/api";
 
 const CreateBill = () => {
   {/* Camera and form toggle */}
@@ -18,9 +17,9 @@ const CreateBill = () => {
   const [capturing, setCapturing] = useState(false);
 
   {/* OCR */}
-  const [ocrLoading, setOcrLoading] = useState(false);
-  const [ocrError, setOcrError] = useState<string | null>(null);
-  const [ocrLines, setOcrLines] = useState<string[]>([]);
+  const [parsed, setParsed] = useState<any>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,26 +98,21 @@ const CreateBill = () => {
     }
   };
 
-  const runOcr = async (uri: string) => {
+  const handleScanReceipt = async () => {
     try {
-        setOcrLoading(true);
-        setOcrError(null);
+      setScanning(true);
+      setScanError(null);
 
-        if (!isSupported) {
-            setOcrError("OCR is not supported on this device.");
-            return;
-        }
+      const result = await parseReceiptImage(photoUri!);
 
-        const lines = await extractTextFromImage(uri);
-        setOcrLines(lines);
-        console.log("Extracted text lines:", lines);
-        return lines;
-    } catch (error: any) {
-        setOcrError("Failed to extract text: " + error.message);
+      console.log("Parsed receipt:", result);
+      setParsed(result);
+    } catch (error) {
+      console.error("Error scanning receipt:", error);
     } finally {
-        setOcrLoading(false);
+      setScanning(false);
     }
-  };
+  }
 
   return (
     <View style={styles.container}>
@@ -142,28 +136,17 @@ const CreateBill = () => {
             <Image source={{ uri: photoUri }} style={styles.previewImg} />
             <View style={styles.previewActions}>
                 <Button title="Retake" onPress={() => setPhotoUri(null)} />
-                <Button
-                    title={ocrLoading ? "Scanning..." : "Use Photo"}
-                    disabled={ocrLoading}
-                    onPress={async () => {
-                        if (!photoUri) return;
-                        const lines = await runOcr(photoUri);
-                        if (!lines) return;
-
-                        // MVP: just log / show on screen first
-                        console.log(lines.join("\n"));
-                    }}
-                />
+                <Button title="Use Photo" onPress={() => handleScanReceipt} />
             </View>
-                {ocrError ? <Text style={{ color: "red" }}>{ocrError}</Text> : null}
-
-                {ocrLines.length > 0 ? (
-                <View style={{ paddingTop: 10 }}>
-                    <Text style={{ fontWeight: "600", marginBottom: 6 }}>Detected text</Text>
-                    <Text selectable style={{ lineHeight: 18 }}>
-                    {ocrLines.join("\n")}
-                    </Text>
-                </View>) : null}
+            {scanning && <Text>Scanning...</Text>}
+            {scanError && <Text style={{ color: 'red' }}>{scanError}</Text>}
+            {parsed && (
+              <View>
+                <Text>Merchant: {parsed.merchant}</Text>
+                <Text>Subtotal: {parsed.subtotal}</Text>
+                {/* etc */}
+              </View>
+            )}
             </View>
         ) : (
             <View style={{ flex: 1 }}>

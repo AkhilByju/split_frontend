@@ -52,3 +52,21 @@ export async function fetchSessionBundle(code) {
         users: userResponse.data.users || []
     };
 }
+
+export async function parseReceiptImage(imageUri) {
+    const formData = new FormData();
+
+    formData.append('image', {
+        uri: imageUri,
+        name: 'receipt.jpg',
+        type: 'image/jpeg',
+    })
+
+    const res = await api.post('/receipt/parse', formData, {
+        headers: {
+        'Content-Type': 'multipart/form-data',
+        },
+    })
+
+    return res.data
+};
