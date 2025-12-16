@@ -71,3 +71,18 @@ export async function parseReceiptImage(imageUri) {
 
     return res.data;
 };
+
+export async function fetchSessionItems(code) {
+    const response = await api.get(`/sessions/${code}/items`);
+    return response.data.items;
+}
+
+export async function addItemsToSession(code, items) {
+    const response = await api.post(`/sessions/${code}/items/bulk`, { items });
+    return response.data.items;
+}
+
+export async function toggleItemClaim(code, itemId, userId) {
+    const response = await api.post(`/sessions/${code}/items/${itemId}/toggle-claim`, { userId });
+    return response.data.item;
+}

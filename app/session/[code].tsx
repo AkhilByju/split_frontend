@@ -7,12 +7,14 @@ import {
   ScrollView,
 } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
-import { fetchSessionBundle, formatDollars } from '../../src/api'
+import { fetchSessionBundle, formatDollars, fetchSessionItems } from '../../src/api'
 
 export default function SessionScreen() {
   const { code } = useLocalSearchParams<{ code?: string }>() // from URL
   const [session, setSession] = useState<any | null>(null)
   const [users, setUsers] = useState<any[]>([])
+  const [items, setItems] = useState<any[]>([])
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -28,9 +30,12 @@ export default function SessionScreen() {
         setLoading(true)
         setError(null)
 
-        const { session, users } = await fetchSessionBundle(String(code))
-        setSession(session)
-        setUsers(users)
+        const { session, users } = await fetchSessionBundle(String(code));
+        setSession(session);
+        setUsers(users);
+
+        const fetchedItems = await fetchSessionItems(String(code));
+        setItems(fetchedItems);
       } catch (err) {
         console.error(err)
         setError('Failed to load bill')
@@ -157,7 +162,7 @@ export default function SessionScreen() {
         )}
       </View>
 
-      {/* Items placeholder */}
+      {/* Items */}
       <View
         style={{
           backgroundColor: '#fff',
@@ -173,9 +178,27 @@ export default function SessionScreen() {
         <Text style={{ fontSize: 16, fontWeight: '600', marginBottom: 8 }}>
           Items
         </Text>
-        <Text style={{ color: '#777' }}>
-          Items will show up here once we wire them in.
-        </Text>
+
+        {items.length === 0 ? (
+          <Text style={{ color: '#777' }}>
+            No items yet. Scan a receipt or add items manually.
+          </Text>
+        ) : (
+          items.map((item) => (
+            <View
+              key={item.id}
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                paddingVertical: 4,
+              }}
+            >
+              {/* later this is where your checkbox goes */}
+              <Text>{item.name}</Text>
+              <Text>{formatDollars(item.price_cents)}</Text>
+            </View>
+          ))
+        )}
       </View>
     </ScrollView>
   )

@@ -1,11 +1,13 @@
-import { View, Text, StyleSheet, Button, TouchableOpacity, Image, ScrollView} from "react-native";
+import { View, Text, StyleSheet, Button, TouchableOpacity, Image, ScrollView, TextInput} from "react-native";
 import { useRef, useState } from "react";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import CreatePartyForm from "../components/createPartyForm";
 import { router } from "expo-router";
-import { api, parseReceiptImage } from "../src/api";
+import { addItemsToSession, api, parseReceiptImage } from "../src/api";
 
 const CreateBill = () => {
+  const [displayName, setDisplayName] = useState('');
+
   {/* Camera and form toggle */}
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
@@ -67,6 +69,11 @@ const CreateBill = () => {
         const hostUser = userResponse.data.user;
         console.log("Created host user:", hostUser);
 
+        // store the parsed items
+        if (parsed?.items?.length) {
+          await addItemsToSession(session.code, parsed.items);
+        }
+
 
         // On success, navigate to the bill screen
         router.push(`/session/${session.code}`);
@@ -99,14 +106,46 @@ const CreateBill = () => {
   };
 
   const handleScanReceipt = async () => {
+    if (!photoUri) {
+      setScanError("No photo to scan");
+      return;
+    }
+
     try {
       setScanning(true);
       setScanError(null);
+      setLoading(true);
+      setError(null);
 
+      // Scan the reciept
       const result = await parseReceiptImage(photoUri!);
-
       console.log("Parsed receipt:", result);
       setParsed(result);
+
+      const { merchant, subtotal, tax, tip, items } = result;
+
+      // create session
+      const sessionResponse = await api.post('/sessions/create', {
+        merchant,
+        subtotal,
+        tax,
+        tip,
+      });
+      const session = sessionResponse.data.session;
+      console.log('Created session:', session);
+
+      // add the host user
+      const userResponse = await api.post(`/sessions/${session.code}/join`, {displayName, isHost: true})
+      const hostUser = userResponse.data.user;
+      console.log("Created Host User: ", hostUser);
+
+      // store items in the DB
+      if (items?.length) {
+        await addItemsToSession(session.code, items);
+      }
+
+      // Navigate to the bill screen
+      router.push(`/session/${session.code}`);
     } catch (error) {
       console.error("Error scanning receipt:", error);
     } finally {
@@ -116,6 +155,23 @@ const CreateBill = () => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.nameInput}>
+        {/* Ideally Change this in the future and have it at the start of automatically connected with credit card ID*/}
+      <TextInput
+          value={displayName}
+          onChangeText={setDisplayName}
+          placeholder="Enter Your Name"
+          autoCapitalize="words"
+          style={{
+            borderWidth: 1,
+            borderColor: '#ccc',
+            borderRadius: 8,
+            paddingHorizontal: 10,
+            paddingVertical: 8,
+            marginBottom: 12,
+          }}
+        />
+      </View>
       <View style={styles.topBar}>
         <Button
           title={useCamera ? "Use Form" : "Use Camera"}
@@ -180,8 +236,12 @@ const styles = StyleSheet.create({
     flex: 1, 
     backgroundColor: "#fff" 
   },
+  nameInput: {
+    paddingTop: 30,
+    paddingHorizontal: 16,
+  },
   topBar: {
-    paddingTop: 50,
+    paddingTop: 10,
     paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
