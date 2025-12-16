@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Button, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, Button, TouchableOpacity, Image, ScrollView} from "react-native";
 import { useRef, useState } from "react";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import CreatePartyForm from "../components/createPartyForm";
@@ -136,7 +136,7 @@ const CreateBill = () => {
             <Image source={{ uri: photoUri }} style={styles.previewImg} />
             <View style={styles.previewActions}>
                 <Button title="Retake" onPress={() => setPhotoUri(null)} />
-                <Button title="Use Photo" onPress={() => handleScanReceipt} />
+                <Button title="Use Photo" onPress={() => handleScanReceipt()} />
             </View>
             {scanning && <Text>Scanning...</Text>}
             {scanError && <Text style={{ color: 'red' }}>{scanError}</Text>}
@@ -144,7 +144,8 @@ const CreateBill = () => {
               <View>
                 <Text>Merchant: {parsed.merchant}</Text>
                 <Text>Subtotal: {parsed.subtotal}</Text>
-                {/* etc */}
+                <Text>Tax: {parsed.tax}</Text>
+                <Text>Tip: {parsed.tip}</Text>
               </View>
             )}
             </View>
@@ -163,9 +164,9 @@ const CreateBill = () => {
             </View>
         )
         ) : (
-        <View style={styles.form}>
+        <ScrollView style={styles.form}>
             <CreatePartyForm onSubmit={handleSubmit} loading={loading} error={error} />
-        </View>
+        </ScrollView>
         )}
 
     </View>

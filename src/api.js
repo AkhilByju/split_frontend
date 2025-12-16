@@ -1,12 +1,11 @@
-import axois from "axios";
-import Constants from 'expo-constants';
+import axios from "axios";
 
-const apiURL = Constants.expoConfig?.extra?.apiURL || "";
+const apiURL = process.env.EXPO_PUBLIC_API_URL || '';
 
-export const api = axois.create({
-    baseURL: apiURL,
-    timeout: 5000,
-})
+export const api = axios.create({
+  baseURL: apiURL,
+  timeout: 5000,
+});
 
 export async function joinSession({ code, displayName, isHost }) {
     code = code.trim();
@@ -15,6 +14,8 @@ export async function joinSession({ code, displayName, isHost }) {
     if (!code || !displayName) {
         throw new Error("Session code and display name are required to join a session.");
     }
+
+    console.log("API URL:", api.defaults.baseURL);
 
     const userResponse = await api.post(`/sessions/${code}/join`, { displayName, isHost });
     const currentUser = userResponse.data.user;
@@ -68,5 +69,5 @@ export async function parseReceiptImage(imageUri) {
         },
     })
 
-    return res.data
+    return res.data;
 };
